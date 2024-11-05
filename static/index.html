@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Mini Perplexity</title>
+</head>
+
+<body>
+
+    <div id="result"></div>
+
+    <input id="query" type="text" placeholder="What's on your mind ?...">
+    <button onclick="search()">Go</button>
+</body>
+
+
+<script>
+    const queryInput = document.getElementById("query");
+    const resultContainer = document.getElementById("result");
+
+    async function search() {
+        const resp = await fetch("/search", {
+            method: "POST",
+            body: JSON.stringify({
+                "query": queryInput.value
+            }),
+            headers: {
+                "content-type": "application/json"
+            }
+        })
+        const respJson = await resp.json();
+        resultContainer.innerText = JSON.stringify(respJson);
+    }
+</script>
+
+</html>
