@@ -18,7 +18,5 @@ class SearchEngine:
 
     @async_wrap
     def search(self, term: str, **kwargs) -> list[dict]:
-        raise Exception()
-        return
         res = self.service.cse().list(q=term, cx=self.search_engine_id, **kwargs).execute()
         return res['items']

@@ -38,7 +38,7 @@ async def search(
     search_tasks = [search_engine.search(term) for term in search_terms]
     search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
     search_results_flattened = list(
-        reduce(lambda x, y: x + y[:2] if not isinstance(y, Exception) else x, search_results, []))
+        reduce(lambda x, y: x + y[:4] if not isinstance(y, Exception) else x, search_results, []))
 
     # Step 3: Crawl the top results from the search engine (Async)
     # We associate each crawl result with its corresponding URL
@@ -66,6 +66,4 @@ async def search(
     if len(combined_results) == 0:
         raise HTTPException(status_code=500, detail="Unable to search or analyse results")
 
-    return {
-        "results": combined_results
-    }
+    return combined_results
