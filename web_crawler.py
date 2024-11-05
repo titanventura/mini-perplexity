@@ -1,12 +1,10 @@
-from functools import lru_cache
+import re
 from typing import Optional
 
 import httpx
 from bs4 import BeautifulSoup
-import re
 
 
-# @lru_cache
 def get_web_crawler():
     return WebCrawler()
 

@@ -1,4 +1,3 @@
-from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -8,7 +7,6 @@ from config import Settings, get_settings
 from utils import async_wrap
 
 
-# @lru_cache
 def get_search_engine(settings: Annotated[Settings, Depends(get_settings)]):
     return SearchEngine(settings.search_api_key, settings.search_engine_id)
 
@@ -20,5 +18,7 @@ class SearchEngine:
 
     @async_wrap
     def search(self, term: str, **kwargs) -> list[dict]:
+        raise Exception()
+        return
         res = self.service.cse().list(q=term, cx=self.search_engine_id, **kwargs).execute()
         return res['items']

@@ -1,6 +1,6 @@
 import asyncio
 from typing import Annotated, List
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -36,22 +36,24 @@ async def search(
 
     # Step 2: Perform web searches for each search term (Async)
     search_tasks = [search_engine.search(term) for term in search_terms]
-    search_results = await asyncio.gather(*search_tasks)
-    search_results_flattened = list(reduce(lambda x, y: x + y[:2], search_results, []))
+    search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+    search_results_flattened = list(
+        reduce(lambda x, y: x + y[:2] if not isinstance(y, Exception) else x, search_results, []))
 
     # Step 3: Crawl the top results from the search engine (Async)
     # We associate each crawl result with its corresponding URL
     crawl_tasks = [(web_crawler.crawl(sr["formattedUrl"]), sr["formattedUrl"]) for sr in search_results_flattened]
-    crawl_results = await asyncio.gather(*[task[0] for task in crawl_tasks])
-    crawl_urls = [task[1] for task in crawl_tasks]
+    crawl_results = await asyncio.gather(*[task[0] for task in crawl_tasks], return_exceptions=True)
+    crawl_urls = [task[1] if not isinstance(task[1], Exception) else None for task in crawl_tasks]
+    crawl_urls = list(filter(lambda u: u is not None, crawl_urls))
 
     # Step 4: Analyse the crawled content with Gen AI (Async)
     # We associate each analysis result with its corresponding URL
     analyse_tasks = [(gen_ai.analyse(content, req.query), url) for content, url in zip(crawl_results, crawl_urls)]
-    analyse_results = await asyncio.gather(*[task[0] for task in analyse_tasks])
-    analyse_urls = [task[1] for task in analyse_tasks]
+    analyse_results = await asyncio.gather(*[task[0] for task in analyse_tasks], return_exceptions=True)
+    analyse_urls = [task[1] if not isinstance(task[1], Exception) else None for task in analyse_tasks]
+    analyse_urls = list(filter(lambda u: u is not None, analyse_urls))
 
-    print(analyse_urls, analyse_results)
     # Step 5: Combine analysis results with URLs and sort by confidence level
     combined_results = []
     for res, url in zip(analyse_results, analyse_urls):
@@ -61,4 +63,9 @@ async def search(
     # Sort the results by confidence level in descending order and return the top 5
     combined_results = sorted(combined_results, key=lambda res: res["confidence"], reverse=True)
 
-    return combined_results[:5]
+    if len(combined_results) == 0:
+        raise HTTPException(status_code=500, detail="Unable to search or analyse results")
+
+    return {
+        "results": combined_results
+    }

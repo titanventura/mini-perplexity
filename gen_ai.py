@@ -1,6 +1,5 @@
 import json
 import typing
-from functools import lru_cache
 from typing import Annotated
 
 import google.generativeai as genai
@@ -10,7 +9,6 @@ from config import Settings, get_settings
 from utils import async_wrap
 
 
-# @lru_cache
 def get_gen_ai(settings: Annotated[Settings, Depends(get_settings)]):
     return GenAi(settings.gemini_api_key)
 
